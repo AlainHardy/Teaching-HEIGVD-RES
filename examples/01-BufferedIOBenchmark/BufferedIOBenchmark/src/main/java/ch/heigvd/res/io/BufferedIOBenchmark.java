@@ -1,15 +1,24 @@
 package ch.heigvd.res.io;
 
 import ch.heigvd.res.io.util.Timer;
+import sun.print.PrinterJobWrapper;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.sun.media.sound.FFT;
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 
 /**
  * This is a very simple program, which main objective is to show that you can
@@ -74,7 +83,7 @@ public class BufferedIOBenchmark {
 				LOG.log(Level.SEVERE, ex.getMessage(), ex);
 			}
 		}
-		LOG.log(Level.INFO, "  > Done in {0} ms.", Timer.takeTime());
+		//LOG.log(Level.INFO, "  > Done in {0} ms.", Timer.takeTime());
 	}
 	
 	/**
@@ -149,7 +158,7 @@ public class BufferedIOBenchmark {
 				LOG.log(Level.SEVERE, ex.getMessage(), ex);
 			}
 		}
-		LOG.log(Level.INFO, "  > Done in {0} ms.", Timer.takeTime());
+		//LOG.log(Level.INFO, "  > Done in {0} ms.", Timer.takeTime());
 
 	}
 
@@ -177,8 +186,7 @@ public class BufferedIOBenchmark {
 				// here, we can process bytes block[0..bytesRead]
 				totalBytes += bytesRead;
 			}
-		}
-		
+		}		
 		LOG.log(Level.INFO, "Number of bytes read: {0}", new Object[]{totalBytes});
 	}
 
@@ -187,36 +195,64 @@ public class BufferedIOBenchmark {
 	 */
 	public static void main(String[] args) {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "%5$s %n");
-
+		
+		PrintWriter writer = null;
+	
+		try {
+			 writer = new PrintWriter("file.csv", "UTF-8");
+		} catch (Exception e) {
+			e.getMessage();
+		}
+		
+		writer.printf("%s,%s,%s,%s,%s\n" , "operation", "strategy", "blockSize", "fileSizeInBytes", "durationInMs");
+		
+				
 		BufferedIOBenchmark bm = new BufferedIOBenchmark();
 
 		LOG.log(Level.INFO, "");
 		LOG.log(Level.INFO, "*** BENCHMARKING WRITE OPERATIONS (with BufferedStream)", Timer.takeTime());
 		bm.produceTestData(IOStrategy.BlockByBlockWithBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 500);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.BlockByBlockWithBufferedStream.name(), 500, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.produceTestData(IOStrategy.BlockByBlockWithBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 50);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.BlockByBlockWithBufferedStream.name(), 50, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.produceTestData(IOStrategy.BlockByBlockWithBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 5);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.BlockByBlockWithBufferedStream.name(), 5, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.produceTestData(IOStrategy.ByteByByteWithBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 0);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.ByteByByteWithBufferedStream.name(), 0, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 
 		LOG.log(Level.INFO, "");
 		LOG.log(Level.INFO, "*** BENCHMARKING WRITE OPERATIONS (without BufferedStream)", Timer.takeTime());
 		bm.produceTestData(IOStrategy.BlockByBlockWithoutBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 500);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.BlockByBlockWithoutBufferedStream.name(), 500, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.produceTestData(IOStrategy.BlockByBlockWithoutBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 50);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.BlockByBlockWithoutBufferedStream.name(), 50, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.produceTestData(IOStrategy.BlockByBlockWithoutBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 5);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.BlockByBlockWithoutBufferedStream.name(), 5, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.produceTestData(IOStrategy.ByteByByteWithoutBufferedStream, NUMBER_OF_BYTES_TO_WRITE, 0);
+		writer.printf("%s,%s,%s,%s,%s\n" , "WRITE", IOStrategy.ByteByByteWithoutBufferedStream.name(), 0, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 
 		LOG.log(Level.INFO, "");
 		LOG.log(Level.INFO, "*** BENCHMARKING READ OPERATIONS (with BufferedStream)", Timer.takeTime());
 		bm.consumeTestData(IOStrategy.BlockByBlockWithBufferedStream, 500);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.BlockByBlockWithBufferedStream.name(), 500, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.consumeTestData(IOStrategy.BlockByBlockWithBufferedStream, 50);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.BlockByBlockWithBufferedStream.name(), 50, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.consumeTestData(IOStrategy.BlockByBlockWithBufferedStream, 5);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.BlockByBlockWithBufferedStream.name(), 5, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.consumeTestData(IOStrategy.ByteByByteWithBufferedStream, 0);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.ByteByByteWithBufferedStream.name(), 0, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		
 		LOG.log(Level.INFO, "");
 		LOG.log(Level.INFO, "*** BENCHMARKING READ OPERATIONS (without BufferedStream)", Timer.takeTime());
 		bm.consumeTestData(IOStrategy.BlockByBlockWithoutBufferedStream, 500);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.BlockByBlockWithoutBufferedStream.name(), 500, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.consumeTestData(IOStrategy.BlockByBlockWithoutBufferedStream, 50);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.BlockByBlockWithoutBufferedStream.name(), 50, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.consumeTestData(IOStrategy.BlockByBlockWithoutBufferedStream, 5);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.BlockByBlockWithoutBufferedStream.name(), 5, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
 		bm.consumeTestData(IOStrategy.ByteByByteWithoutBufferedStream, 0);
+		writer.printf("%s,%s,%s,%s,%s\n" , "READ", IOStrategy.ByteByByteWithoutBufferedStream.name(), 0, NUMBER_OF_BYTES_TO_WRITE, Timer.takeTime());
+		
+		writer.close();
 	}
-
 }
